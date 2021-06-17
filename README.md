@@ -23,3 +23,8 @@ curl -X POST -H "Content-Type: application/json" -d '{"uni_id": "<id>"}' http://
 
 ## run txtmsgs
 Execute "txtmsgs.py" script to start receiving/sending messages. You can run many clients in parallel. Follow the prompts on the console.
+
+## Future improvments TBD
+ - Limit multiple clients with the same client ID so that we do not run into race conditions for messages.
+ - Use date/time sorting instead of integer sorting to make the project more realistic.
+ - Improve the graceful shutdown.
