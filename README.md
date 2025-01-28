@@ -10,6 +10,12 @@ Install pycurl:
 pip3 install pycurl
 ```
 
+## style checking
+Install pycodestyle:
+```bash
+pip3 install pycodestyle
+```
+
 ## run webserver
 Execute "webserver.py" script to start managing requests from clients. The server acts like a broker.
 
