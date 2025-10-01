@@ -6,6 +6,10 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import json
 import collections
+import datetime
+import iso8601
+import uuid
+from collections import namedtuple
 
 #class Phone is a definition of scalable client.
 # We can create many Phone Objects within this program
@@ -16,7 +20,7 @@ class Phone:
     host = '127.0.0.1'
     url_conn = 'http://' + host + ':' + port
     dict_messages = collections.OrderedDict()
-    counter = 1
+    TextMessage = namedtuple('TextMessage', ['message', 'time'])
     #shutdown = False
 
     def set_uid(self, uid):
@@ -45,9 +49,7 @@ class Phone:
             json_obj = json.loads(json_str.strip())
 
             for lst_item in json_obj:
-                for key, value in lst_item.items():
-                    self.dict_messages[self.counter] = value
-                    self.counter = self.counter + 1
+                self.dict_messages[str(uuid.uuid4())] = self.TextMessage(lst_item['mess'], lst_item['time'])
         
         crl.close()
     
@@ -60,15 +62,18 @@ class Phone:
                 print(key,value)
     
     def show_msgs(self):
-        for item in self.dict_messages.items():
-            print(item)
+        for key, value in self.dict_messages.items():
+            print(f"message ID:{key} message time:{value.time} message: {value.message}")
 
     def del_msg(self, del_key):
-        self.dict_messages.pop(del_key)
+        if del_key in self.dict_messages:
+            del self.dict_messages[del_key]
+        else:
+            print(f"could not delete message {del_key} because it could not be found")
 
     #submit a message to a defined recipient 
     def sendmsg(self, tonumber, themsg):
-        data = {'uni_id': str(tonumber), 'mess': str(themsg)}
+        data = {'uni_id': str(tonumber), 'mess': str(themsg), 'time': datetime.datetime.utcnow().isoformat()}
         body_as_json_string = json.dumps(data)
 
         send_post(self.url_conn +'/sent_message', body_as_json_string)
@@ -106,7 +111,7 @@ def get_input_from_user(device):
                 device.show_msgs()
             elif inp == "d":
                 del_value = input("Please enter the message ID you would like to delete:\n")
-                device.del_msg(int(del_value))
+                device.del_msg(del_value)
             elif inp == "L":
                 device.show_min_max_key()
                 min_value = input("Please enter the start index:\n")

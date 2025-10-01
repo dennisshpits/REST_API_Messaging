@@ -10,6 +10,12 @@ Install pycurl:
 pip3 install pycurl
 ```
 
+Install iso8601:
+```bash
+pip3 install iso8601
+```
+
+
 ## style checking
 Install pycodestyle:
 ```bash
@@ -32,5 +38,4 @@ Execute "txtmsgs.py" script to start receiving/sending messages. You can run man
 
 ## Future improvments TBD
  - Limit multiple clients with the same client ID so that we do not run into race conditions for messages.
- - Use date/time sorting instead of integer sorting to make the project more realistic.
  - Improve the graceful shutdown.
