@@ -28,8 +28,6 @@ def getMsg(id):
         if messages[i]["uni_id"] == id:
             messages.pop(i)
 
-    print(mylistcpy)
-
     return jsonify(mylistcpy)
 
 @app.route("/uni_id", methods=["POST"])
