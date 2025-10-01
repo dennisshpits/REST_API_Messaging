@@ -42,7 +42,8 @@ def addPhone():
 def addMessage():
     uni = request.json['uni_id']
     mess = request.json['mess']
-    data = {'uni_id': uni, 'mess': mess}
+    t = request.json['time']
+    data = {'uni_id': uni, 'mess': mess, 'time': t}
     messages.append(data)
 
     return 'success\n'
