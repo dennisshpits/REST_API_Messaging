@@ -52,6 +52,11 @@ Run tests:
 ./tools/unit_test.sh
 ```
 
+Run coverage report:
+```bash
+./tools/coverage.sh
+```
+
 ## Future improvments TBD
  - Limit multiple clients with the same client ID so that we do not run into race conditions for messages.
  - Improve the graceful shutdown.
