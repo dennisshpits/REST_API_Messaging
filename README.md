@@ -36,6 +36,27 @@ curl -X POST -H "Content-Type: application/json" -d '{"uni_id": "<id>"}' http://
 ## run txtmsgs
 Execute "txtmsgs.py" script to start receiving/sending messages. You can run many clients in parallel. Follow the prompts on the console.
 
+## unit tests
+Install pytest:
+```bash
+pip3 install pytest
+```
+
+Install pytest-cov:
+```bash
+pip3 install pytest-cov
+```
+
+Run tests:
+```bash
+./tools/unit_test.sh
+```
+
+Run coverage report:
+```bash
+./tools/coverage.sh
+```
+
 ## Future improvments TBD
  - Limit multiple clients with the same client ID so that we do not run into race conditions for messages.
  - Improve the graceful shutdown.
