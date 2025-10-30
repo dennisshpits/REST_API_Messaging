@@ -10,6 +10,9 @@ import datetime
 import iso8601
 import uuid
 from collections import namedtuple
+from flask import Flask, request
+import socket
+import logging
 
 #class Phone is a definition of scalable client.
 # We can create many Phone Objects within this program
@@ -23,35 +26,32 @@ class Phone:
     TextMessage = namedtuple('TextMessage', ['message', 'time'])
     #shutdown = False
 
+    def __init__(self):
+        self.app = Flask(__name__)
+
     def set_uid(self, uid):
         self.unique_id = str(uid)
+        self.m_port = get_free_port()
         #enroll the number/email in the webserver
-        data = {'uni_id': self.unique_id}
+        data = {'uni_id': self.unique_id, 'port': self.m_port}
         body_as_json_string = json.dumps(data)
 
         send_post(self.url_conn +'/uni_id', body_as_json_string)
+
+        self.app.add_url_rule(
+            rule='/phone/' + self.unique_id,   # Dynamic route
+            endpoint='recv',                   # Unique name for the route
+            view_func=self.recv,               # Function to handle requests
+            methods=['POST']                   # Allowed HTTP methods
+        )
     
     def recv(self):
-        
-        global quit
-        
-        crl = pycurl.Curl()
-        crl.setopt(crl.URL, self.url_conn + '/messages/' + self.unique_id)
-        
-        while not quit:
-            time.sleep(2)
-            
-            b_obj = BytesIO()
-            crl.setopt(crl.WRITEDATA, b_obj)
-            crl.perform()
-            get_body = b_obj.getvalue()
-            json_str = get_body.decode('utf8')
-            json_obj = json.loads(json_str.strip())
+        json_str = request.data.decode('utf-8')
+        json_obj = json.loads(json_str.strip())
 
-            for lst_item in json_obj:
-                self.dict_messages[str(uuid.uuid4())] = self.TextMessage(lst_item['mess'], lst_item['time'])
-        
-        crl.close()
+        for lst_item in json_obj:
+            self.dict_messages[str(uuid.uuid4())] = self.TextMessage(lst_item['mess'], lst_item['time'])
+        return 'success\n'
     
     def show_min_max_key(self):
         print('Min index =%s, Max index =%s' % (min(list(self.dict_messages.keys())),max(list(self.dict_messages.keys()))))
@@ -78,6 +78,12 @@ class Phone:
 
         send_post(self.url_conn +'/sent_message', body_as_json_string)
 
+    # start receiving messages
+    def run(self):
+        logging.getLogger('werkzeug').disabled = True
+        self.app.logger.disabled = True
+        self.app.run(host=self.host, port=self.m_port, debug=False)
+
 #send a post request using pycurl
 def send_post(url_str, data):
     crl = pycurl.Curl()
@@ -87,6 +93,11 @@ def send_post(url_str, data):
     crl.setopt(pycurl.POSTFIELDS, data)
     crl.perform()
     crl.close()
+
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))  # Let the OS choose a free port
+        return s.getsockname()[1]
 
 #exit the program and wait until futures are done to exit gracefully
 def exitprogram(f1, f2):
@@ -137,8 +148,8 @@ def main():
 
     #threads
     executor = ThreadPoolExecutor(max_workers=2)
+    futrec = executor.submit(current_user.run)
     futinput = executor.submit(get_input_from_user, current_user)
-    futrec = executor.submit(current_user.recv)
 
     global quit
     try:
