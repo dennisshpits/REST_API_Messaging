@@ -10,9 +10,9 @@ import datetime
 import iso8601
 import uuid
 from collections import namedtuple
-from flask import Flask, jsonify, request
+from flask import Flask, request
 import socket
-import logging, sys, os
+import logging
 
 #class Phone is a definition of scalable client.
 # We can create many Phone Objects within this program
@@ -27,7 +27,6 @@ class Phone:
     #shutdown = False
 
     def __init__(self):
-        # Initialize the Flask app
         self.app = Flask(__name__)
 
     def set_uid(self, uid):
