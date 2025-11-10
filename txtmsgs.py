@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 import pycurl
-from io import BytesIO
-import subprocess
-from concurrent.futures import ThreadPoolExecutor
 import time
 import json
 import collections
@@ -13,6 +10,8 @@ from collections import namedtuple
 from flask import Flask, request
 import socket
 import logging
+from werkzeug.serving import make_server
+import threading
 
 #class Phone is a definition of scalable client.
 # We can create many Phone Objects within this program
@@ -24,10 +23,13 @@ class Phone:
     url_conn = 'http://' + host + ':' + port
     dict_messages = collections.OrderedDict()
     TextMessage = namedtuple('TextMessage', ['message', 'time'])
-    #shutdown = False
 
     def __init__(self):
         self.app = Flask(__name__)
+        logging.getLogger('werkzeug').disabled = True
+        self.app.logger.disabled = True
+        self.server = None
+        self.thread = None
 
     def set_uid(self, uid):
         self.unique_id = str(uid)
@@ -79,10 +81,15 @@ class Phone:
         send_post(self.url_conn +'/sent_message', body_as_json_string)
 
     # start receiving messages
-    def run(self):
-        logging.getLogger('werkzeug').disabled = True
-        self.app.logger.disabled = True
-        self.app.run(host=self.host, port=self.m_port, debug=False)
+    def start(self):
+        self.server = make_server(self.host, self.m_port, self.app)
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.start()
+
+    def shutdown(self):
+        if self.server:
+            self.server.shutdown()
+            self.thread.join()
 
 #send a post request using pycurl
 def send_post(url_str, data):
@@ -99,17 +106,9 @@ def get_free_port():
         s.bind(('', 0))  # Let the OS choose a free port
         return s.getsockname()[1]
 
-#exit the program and wait until futures are done to exit gracefully
-def exitprogram(f1, f2):
-    global quit
-    print("quitting txt service...")
-    quit = True #send quit signal
-    while (not (f1.done() and f2.done())):
-        time.sleep(2)
-
 #accepts a Phone object and waits for keyboard input
 def get_input_from_user(device):
-    global quit
+    quit = False
 
     try:
         while not quit:
@@ -131,7 +130,8 @@ def get_input_from_user(device):
                 device.show_msgs_start_stop(min_value,max_value)
                 print("\n")
             elif inp == "q":
-                quit=True
+                quit = True
+                device.shutdown()
             else:
                 print("unknown input")
     except:
@@ -145,23 +145,7 @@ def main():
 
     current_user = Phone()
     current_user.set_uid(uid_value)
+    current_user.start()
+    get_input_from_user(current_user)
 
-    #threads
-    executor = ThreadPoolExecutor(max_workers=2)
-    futrec = executor.submit(current_user.run)
-    futinput = executor.submit(get_input_from_user, current_user)
-
-    global quit
-    try:
-        while(not (futinput.done() or futrec.done())):
-            time.sleep(2)
-    except:
-        pass
-
-    try:
-        exitprogram(futinput, futrec)
-    except:
-        pass
-
-quit = False # used to notify threads to exit
 main()
